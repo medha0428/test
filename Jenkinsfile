@@ -21,7 +21,7 @@ pipeline {
     stages {
         stage('Clone sources'){
             steps {
-                git url: 'https://github.com/medha0428/test'
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'https://github.com/anit345/test.git']]])
             }
         }
 
@@ -33,17 +33,6 @@ pipeline {
 		}
 	      }
 	}
-
-//	stage('Quality Gate') {
-//		steps {
-//			timeout(time: 1, unit: 'HOURS') {
-			//Parameter indicates wether to set pipeline to UNSTABLE if Quality Gate fails
-		        // true = set pipeline to UNSTABLE, false = don't
-			// Requires SonarQube Scanner for Jenkins 2.7+
-//			waitForQualityGate abortPipeline: false
-//		       }
-//		 }
-//	}
 
 	stage('Artifactory configuration') {
 		
@@ -83,6 +72,42 @@ pipeline {
 		  script {
 
 		server.publishBuildInfo buildInfo
+		}
+		}
+	}
+	    stage('Docker image') {
+		steps {
+		  script {
+
+		sh """
+           cd spring-boot-examples/spring-boot-web-application
+           docker build -t Sample_java_docker_image .
+        """
+		}
+		}
+	}
+	        stage('Deploy') {
+		steps {
+		  script {
+
+		sh """
+        
+            gcloud container clusters get-credentials techocamp-1 --region us-central1
+            
+            #ConfigMaps
+            kubectl create configmap spring-config --from-file=spring-boot-examples/spring-boot-web-application/src/main/resources/application.properties
+            kubectl describe configmaps spring-config
+            
+            #Autoscale at 90% CPU usage
+            
+            kubectl autoscale deployment spring --min=2 --max=5 --cpu-percent=90
+            kubectl get hpa
+            
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/deploy.yml
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/service.yml
+            
+            
+        """
 		}
 		}
 	}
