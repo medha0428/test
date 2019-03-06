@@ -38,8 +38,8 @@ node('master')
             kubectl autoscale deployment spring --min=2 --max=5 --cpu-percent=90
             kubectl get hpa
             
-            kubectl apply -f spring-boot-examples/spring-boot-web-application/maven-deployment.yml
-            kubectl apply -f spring-boot-examples/spring-boot-web-application/maven-svc.yml
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/deploy.yml
+            kubectl apply -f spring-boot-examples/spring-boot-web-application/service.yml
             
             
         """
