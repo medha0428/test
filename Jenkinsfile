@@ -2,12 +2,11 @@
 
 def server = Artifactory.server 'Artifactory Version 4.15.0'
 
-		 //If artifactory is not defined in Jenkins, then create on:
-		// def server = Artifactory.newServer url: 'Artifactory url', username: 'username', password: 'password'
+		 //Define artifactory in Jenkins, then create on:
 
 //Create Artifactory Maven Build instance
 def rtMaven = Artifactory.newMavenBuild()
-
+def rtDocker = Artifactory.docker username: 'artifactory-username', password: 'artifactory-password'
 def buildInfo
 
 pipeline {
@@ -79,10 +78,8 @@ pipeline {
 		steps {
 		  script {
 
-		sh """
-           cd spring-boot-examples/spring-boot-web-application
-           docker build -t Sample_java_docker_image .
-        """
+		def buildInfo = rtDocker.push('<artifactory-docker-registry-url>/hello-world:latest', '<target-artifactory-repository>')
+			  server.publishBuildInfo buildInfo
 		}
 		}
 	}
